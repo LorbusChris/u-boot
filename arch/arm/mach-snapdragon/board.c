@@ -90,6 +90,21 @@ int dram_init_banksize(void)
 	return 0;
 }
 
+/*
+ * Snapdragon devices commonly have more than 4 GiB of RAM. Cap the usable
+ * RAM top at 4 GiB so that U-Boot relocates itself and all subsequent LMB
+ * allocations (kernel_addr_r, ramdisk_addr_r, fdt_addr_r, etc.) stay within
+ * the 32-bit physical address space. This is required for grub's EFI handoff
+ * and the kernel EFI stub, both of which cannot handle load addresses above
+ * 0x100000000.
+ */
+phys_addr_t board_get_usable_ram_top(phys_size_t total_size)
+{
+	if (gd->ram_top > SZ_4G)
+		return SZ_4G;
+	return gd->ram_top;
+}
+
 /**
  * The generic memory parsing code in U-Boot lacks a few things that we
  * need on Qualcomm:
